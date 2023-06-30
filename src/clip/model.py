@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
-
+import copy
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -281,6 +281,14 @@ class CLIP(nn.Module):
                 heads=vision_heads,
                 output_dim=embed_dim
             )
+            self.visual_sketch = VisionTransformer(
+                input_resolution=image_resolution,
+                patch_size=vision_patch_size,
+                width=vision_width,
+                layers=vision_layers,
+                heads=vision_heads,
+                output_dim=embed_dim
+            )
 
         self.transformer = Transformer(
             width=transformer_width,
@@ -345,6 +353,12 @@ class CLIP(nn.Module):
             return self.visual(image.type(self.dtype), prompt.type(self.dtype))
         else:
             return self.visual(image.type(self.dtype))
+    
+    def encode_sketch(self, image, prompt=None):
+        if prompt is not None:
+            return self.visual_sketch(image.type(self.dtype), prompt.type(self.dtype))
+        else:
+            return self.visual_sketch(image.type(self.dtype))
 
     def encode_text(self, text):
         x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
@@ -438,5 +452,14 @@ def build_model(state_dict: dict):
             del state_dict[key]
 
     convert_weights(model)
-    model.load_state_dict(state_dict)
+    
+    new_state_dict = copy.deepcopy(state_dict)
+    for k, v in state_dict.items():
+        if k.startswith("visual."):
+            new_k = "visual_sketch"+k[6:]
+            new_state_dict[new_k] = v
+        
+
+    
+    model.load_state_dict(new_state_dict)
     return model.eval()

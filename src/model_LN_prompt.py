@@ -33,6 +33,7 @@ class Model(pl.LightningModule):
         self.clip, _ = clip.load('ViT-B/32', device=self.device)
         # self.clip.apply(freeze_all_but_bn2)
         freeze_all_but_bn2(self.clip)
+        freeze_model(self.clip.transformer)
 
         # Prompt Engineering
         self.sk_prompt = nn.Parameter(torch.randn(self.opts.n_prompts, self.opts.prompt_dim))
@@ -55,7 +56,7 @@ class Model(pl.LightningModule):
             feat = self.clip.encode_image(
                 data, self.img_prompt.expand(data.shape[0], -1, -1))
         else:
-            feat = self.clip.encode_image(
+            feat = self.clip.encode_sketch(
                 data, self.sk_prompt.expand(data.shape[0], -1, -1))
         return feat
 
