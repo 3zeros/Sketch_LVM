@@ -41,7 +41,7 @@ class Sketchy(torch.utils.data.Dataset):
         self.return_orig = return_orig
 
         self.all_categories = os.listdir(os.path.join(
-            self.opts.data_dir, 'Sketchy', 'sketch', 'tx_000000000000'
+            self.opts.data_dir, 'sketchy', 'Sketchy', 'sketch', 'tx_000000000000'
         ))
         if self.opts.data_split > 0:
             np.random.shuffle(self.all_categories)
@@ -60,10 +60,10 @@ class Sketchy(torch.utils.data.Dataset):
 
         for category in self.all_categories:
             self.all_sketches_path.extend(glob.glob(os.path.join(
-                self.opts.data_dir, 'Sketchy', 'sketch', 'tx_000000000000', category, '*.png'
+                self.opts.data_dir, 'sketchy', 'Sketchy', 'sketch', 'tx_000000000000', category, '*.png'
             )))
             self.all_photos_path[category] = glob.glob(os.path.join(
-                self.opts.data_dir, 'EXTEND_image_sketchy', category, '*.jpg'
+                self.opts.data_dir, 'sketchy', 'Sketchy', 'extended_photo', category, '*.jpg'
             ))
 
     def __len__(self):

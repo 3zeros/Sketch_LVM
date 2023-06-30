@@ -1,15 +1,31 @@
 import os
 import glob
+import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
-
+import sys
+sys.path.append("..")
 from src.model_LN_prompt import Model
 from src.dataset_retrieval import Sketchy
 from experiments.options import opts
-
+def count_parameters(model):
+    visual_cnt=0; text_cnt=0; etc_cnt=0
+    for name, p in model.named_parameters():
+        if p.requires_grad:
+            if name.startswith("clip.visual"):
+                # print(f"\t{name}\t{p.numel()}")
+                visual_cnt+=p.numel()
+            elif name.startswith("clip.transformer"):
+                text_cnt+=p.numel()
+                # print(f"\t{name}\t{p.numel()}")
+            else:
+                etc_cnt+=p.numel()
+                # print(f"{name}\t{p.numel()}")
+    print(f"visual: {visual_cnt}, text: {text_cnt}, etc: {etc_cnt}")
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 if __name__ == '__main__':
     dataset_transforms = Sketchy.data_transform(opts)
 
@@ -46,7 +62,7 @@ if __name__ == '__main__':
         logger=logger,
         # val_check_interval=10, 
         # accumulate_grad_batches=1,
-        check_val_every_n_epoch=5,
+        check_val_every_n_epoch=opts.check_val_every_n_epoch,
         resume_from_checkpoint=ckpt_path,
         callbacks=[checkpoint_callback]
     )
@@ -56,6 +72,9 @@ if __name__ == '__main__':
     else:
         print ('resuming training from %s'%ckpt_path)
         model = Model().load_from_checkpoint(ckpt_path)
-
+    
+    print(model)
+    trainable_param = count_parameters(model)
+    
     print ('beginning training...good luck...')
     trainer.fit(model, train_loader, val_loader)

@@ -15,16 +15,24 @@ def freeze_all_but_bn(m):
     if not isinstance(m, torch.nn.LayerNorm):
         if hasattr(m, 'weight') and m.weight is not None:
             m.weight.requires_grad_(False)
-        if hasattr(m, 'bias') and m.bias is not None:
+        elif hasattr(m, 'bias') and m.bias is not None:
             m.bias.requires_grad_(False)
+        else:
+            print(m)
 
+def freeze_all_but_bn2(m):
+    for name, param in m.named_parameters():
+        if "ln" not in name and "projection" not in name:
+            param.requires_grad_(False)
+            
 class Model(pl.LightningModule):
     def __init__(self):
         super().__init__()
 
         self.opts = opts
         self.clip, _ = clip.load('ViT-B/32', device=self.device)
-        self.clip.apply(freeze_all_but_bn)
+        # self.clip.apply(freeze_all_but_bn2)
+        freeze_all_but_bn2(self.clip)
 
         # Prompt Engineering
         self.sk_prompt = nn.Parameter(torch.randn(self.opts.n_prompts, self.opts.prompt_dim))
@@ -32,7 +40,7 @@ class Model(pl.LightningModule):
 
         self.distance_fn = lambda x, y: 1.0 - F.cosine_similarity(x, y)
         self.loss_fn = nn.TripletMarginWithDistanceLoss(
-            distance_function=self.distance_fn, margin=0.2)
+            distance_function=self.distance_fn, margin=self.opts.margin)
 
         self.best_metric = -1e3
 
