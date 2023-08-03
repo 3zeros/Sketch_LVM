@@ -16,6 +16,7 @@ parser.add_argument('--instance_level', action='store_true', default=False)
 # parser.add_argument('--bbox_sigma', type=float, default=0.8)
 # parser.add_argument('--bbox_min_size', type=int, default=50)
 parser.add_argument('--data_split', type=float, default=-1.0)
+parser.add_argument('--dataset', type=int, default=0) # 0-sketchy, 1-tuberlin, 2-quickdraw
 
 # ----------------------
 # Training Params
